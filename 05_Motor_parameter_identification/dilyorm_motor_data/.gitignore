@@ -1,1 +1,4 @@
 __pycache__/
+~*.qrs
+lastCode.py
+lastCode.js
