@@ -83,6 +83,9 @@ def save(wheel_id, label, motor_port, encoder_port, power, battery_start, batter
         f.write("# format: time_ms angle_deg\n")
         for t_ms, angle in samples:
             f.write("%d %s\n" % (t_ms, angle))
+        # force it onto the SD card now: if the robot is switched off, cached files end up empty
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def main():

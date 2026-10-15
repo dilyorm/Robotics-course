@@ -61,6 +61,9 @@ def parse_run(name, text):
             continue
         rows.append([float(x) for x in re.split(r"[,\s]+", line)[:2]])
     a = np.array(rows, dtype=float)
+    if a.ndim != 2 or a.shape[0] < 5 or a.shape[1] < 2:
+        print("skipping %s: only %d data rows (run interrupted?)" % (name, len(rows)), file=sys.stderr)
+        return None
     fmt = head.get("format", "position_deg time_ms")
     if fmt.split()[0].startswith("time"):
         t_ms, ang = a[:, 0], a[:, 1]

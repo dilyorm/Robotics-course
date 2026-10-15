@@ -9,11 +9,13 @@ run and writes the report.
 | File | What it is |
 |---|---|
 | `motor_identification.qrs` | Deliverable 1. TRIK Studio project; its Python code = `collect_motor_data.py` |
+| `motor_identification_diagram.qrs` | Same experiment as a **block diagram** (runs with the normal JS "Upload and run") |
 | `collect_motor_data.py` | Source of the robot program (edit this, then rebuild the `.qrs`) |
 | `pull_data.py` | Copies the result folder from the robot into `motor_data/` (SSH/SCP) |
 | `analyze.py` | Fits every file, makes the plots, writes `report.md` (deliverable 3) |
 | `motor_data/` | Deliverable 2. Raw robot files, **never edit them** |
 | `tools/build_qrs.py` | Rebuilds the `.qrs` after you change `collect_motor_data.py` |
+| `tools/build_diagram_qrs.py` | Rebuilds the diagram project (edit the block list in it, not in TRIK Studio) |
 
 ## Procedure
 
@@ -21,10 +23,20 @@ run and writes the report.
    right = `M3/E3` (wheel 2). If your robot is wired differently, change it and run
    `python tools/build_qrs.py`.
 2. **Charge the battery.** Lift the robot so both wheels spin freely.
-3. Open `motor_identification.qrs` in TRIK Studio, connect to the robot, then **Upload and run**.
-   The display shows the current wheel and PWM level, and the robot beeps when finished.
-   The files are written on the robot to `dilyorm_motor_data/`. The unique name stops classmates'
-   runs from overwriting each other.
+3. Open **one** of the two projects in TRIK Studio, connect to the robot, then **Upload and run**:
+   - `motor_identification_diagram.qrs`: the block diagram. Run it the normal way, which generates JS.
+   - `motor_identification.qrs`: the Python code. The Python code tab must be the active tab.
+
+   The display shows the current wheel and PWM level, and the robot beeps and shows `DONE` when it
+   finishes (about 5 minutes). The files are written on the robot to `dilyorm_motor_data/`. The unique
+   name stops classmates' runs from overwriting each other. Running again overwrites the old files.
+
+   **Do not switch the robot off before `DONE`.** Every file is flushed to the SD card as soon as it is
+   written, but a level that is still running when the power goes is lost.
+
+   The diagram is ordinary blocks (loops, Function, Motors, Clear Encoder, Timer). Four "System Call"
+   blocks with the *Code* flag hold a few lines of JavaScript, because blocks cannot create a folder,
+   read the battery or write to a computed file name (Write To File only takes a fixed name).
 4. With the laptop still on the robot's Wi-Fi, run:
    ```
    python pull_data.py
