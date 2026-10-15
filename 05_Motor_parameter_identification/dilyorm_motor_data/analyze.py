@@ -30,6 +30,7 @@ HERE = Path(__file__).resolve().parent
 
 MOVE_DEG = 10.0       # final angle below this = wheel did not turn
 DZ_FRAC = 0.03        # slower than 3 % of the wheel's top speed = stalled (dead zone)
+HOT_MIN, HOT_FACTOR = 0.3, 2.5   # early/steady speed above both (vs neighbours) = run did not start from rest
 NOMINAL_VBAT = 12.0   # used only if a file has no valid battery reading
 
 
@@ -131,6 +132,12 @@ def fit_run(r):
     tail = t >= 0.6 * t[-1]
     slope = np.polyfit(t[tail], th[tail], 1)[0] if tail.sum() >= 2 else th[-1] / t[-1]
     r["w_slope"] = float(slope)
+    # speed over the first samples relative to steady speed; a run that starts from rest is low here
+    # (ignored below 5 deg of movement: a degree of encoder noise is not a spinning wheel)
+    early = (th[2] - th[0]) / (t[2] - t[0]) \
+        if len(t) >= 3 and t[2] > t[0] and abs(th[2] - th[0]) >= math.radians(5) else 0.0
+    r["start_ratio"] = float(early / slope) if slope else 0.0
+    r["hot_start"] = False
 
     r["w_ss"], r["T_m"], r["rmse_deg"], r["T_m_ok"] = float(slope), float("nan"), float("nan"), False
     if not r["moving"]:
@@ -167,6 +174,14 @@ def wheel_summary(runs, min_pwm):
         for r in rs:
             r["dead"] = (not r["moving"]) or abs(r["w_slope"]) < DZ_FRAC * top
         mov = [r for r in rs if not r["dead"]]
+        # runs where the wheel was already spinning at the first sample (seen on the real robot,
+        # intermittently): much faster early speed than the neighbouring levels. Their T_m is
+        # meaningless and the step fit is biased, so keep only the steady-state slope.
+        for r in mov:
+            nb = [q["start_ratio"] for q in mov if q is not r and np.sign(q["pwm"]) == np.sign(r["pwm"])
+                  and abs(q["pwm"] - r["pwm"]) <= 10]
+            if nb and r["start_ratio"] > HOT_MIN and r["start_ratio"] > HOT_FACTOR * float(np.median(nb)):
+                r["hot_start"], r["T_m_ok"], r["w_ss"] = True, False, r["w_slope"]
         # encoder direction relative to motor direction
         agree = sum(np.sign(r["w_ss"]) == np.sign(r["pwm"]) for r in mov)
         sign = 1 if agree >= len(mov) / 2 else -1
@@ -331,7 +346,9 @@ def write_report(W, runs, args, out):
               "| PWM [%] | U [V] | w_ss [rad/s] | T_m [ms] | fit RMSE [deg] | samples | median dt [ms] | max dt [ms] | note |",
               "|---|---|---|---|---|---|---|---|---|"]
         for r in S["runs"]:
-            note = "stalled" if r["dead"] else ("" if r["T_m_ok"] else "T_m unreliable")
+            note = ("stalled" if r["dead"] else
+                    "not from rest: T_m dropped, w_ss = tail slope" if r["hot_start"] else
+                    "" if r["T_m_ok"] else "T_m unreliable")
             L.append("| %d | %s | %s | %s | %s | %d | %s | %s | %s |" % (
                 r["pwm"], f(r["U"], 2), f(r["w_ss"], 2), f(r["T_m"] * 1000, 0), f(r["rmse_deg"], 1),
                 r["n"], f(r["dt_med_ms"], 1), f(r["dt_max_ms"], 0), note))
@@ -356,17 +373,28 @@ def write_report(W, runs, args, out):
         if not math.isnan(W[w]["k_e_fwd"]) and not math.isnan(W[w]["k_e_rev"]))
     if asym:
         pts.append("Directions are not symmetric: %s." % asym)
+    hot = ["wheel %d at %d %%" % (r["wheel"], r["pwm"]) for w in ids for r in W[w]["runs"] if r["hot_start"]]
+    if hot:
+        pts.append("%d run(s) did not start from rest (%s): the wheel was already turning at the first sample, so "
+                   "their T_m was dropped and w_ss taken from the steady part only." % (len(hot), ", ".join(hot)))
     if len(ids) >= 2:
         a, b = W[ids[0]], W[ids[1]]
         d = 100 * abs(a["k_e"] - b["k_e"]) / np.mean([a["k_e"], b["k_e"]])
-        wa, wb = a["w_100"], b["w_100"]
-        eps = (wb - wa) / ((wa + wb) / 2) if not (math.isnan(wa) or math.isnan(wb)) else float("nan")
-        R = args.track / 2 * 2 / abs(eps) if eps and not math.isnan(eps) else float("inf")
-        pts.append("Wheels %d and %d differ by %.1f %% in fitted k_e; at 100 %% PWM they reach %.2f vs %.2f rad/s. With equal PWM on "
-                   "both sides the robot will not go straight: a %.1f %% speed mismatch with a %.3f m track turns it on "
-                   "a circle of radius ~%.1f m (about %.0f deg of heading per metre)." % (
-                       ids[0], ids[1], d, wa, wb, 100 * abs(eps), args.track, R,
-                       math.degrees(1 / R) if R not in (0, float("inf")) else 0.0))
+        speed = lambda S, p: next((S["sign"] * r["w_ss"] for r in S["runs"] if r["pwm"] == p and not r["dead"]), float("nan"))
+        cases = []
+        for p in (50, 100):
+            wa, wb = speed(a, p), speed(b, p)
+            if math.isnan(wa) or math.isnan(wb):
+                continue
+            eps = (wb - wa) / ((wa + wb) / 2)
+            # wheel speeds differ by eps -> turn radius ~ track / eps (measured at the wheel centre line)
+            R = args.track / abs(eps) if eps else float("inf")
+            cases.append("at %d %% PWM %.2f vs %.2f rad/s, a %.1f %% mismatch -> circle of radius ~%.1f m "
+                         "(about %.0f deg of heading per metre)" % (
+                             p, wa, wb, 100 * abs(eps), R, math.degrees(1 / R) if R != float("inf") else 0.0))
+        pts.append("Wheels %d and %d differ by %.1f %% in fitted k_e. With equal PWM on both sides the robot will not go "
+                   "straight (track %.3f m): %s. The mismatch depends on speed, so one fixed correction factor is not "
+                   "enough." % (ids[0], ids[1], d, args.track, "; ".join(cases) or "no matching levels"))
         pts.append("For odometry this means a model that assumes identical motors (or converts PWM to speed instead "
                    "of reading the encoders) accumulates heading error that grows with distance, and heading error "
                    "turns into position error; per-wheel k_e, U0 and T_m from this table should be used in Week 6.")
