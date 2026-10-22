@@ -108,7 +108,7 @@ print(f'Run time: sim {(t_s[-1]-t_s[0])/1000:.1f} s | real {(t_r[-1]-t_r[0])/100
 
 ### Deliverables
 
-Create a repo `CS413 - Robotics/Lab7/<content>`:
+Create a repo `CS413-Robotics/Lab7/<content>`:
 
 1. **`go_to_goal_sim.qrs`** and **`go_to_goal_real.qrs`**: the programs with your waypoint list, gains `K_v`, `K_θ` and acceptance radius `ε`.
 2. **`odometry_data_sim.txt`** and **`odometry_data_real.txt`**: the raw logs.

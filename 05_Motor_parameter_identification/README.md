@@ -162,12 +162,12 @@ Your parameters are reused in Week 6 (localization) and Week 7 (go-to-goal), and
 
 ### Deliverables
 
-Create a repo `CS413 - Robotics/Lab5/<content>`:
+Create a repo `CS413-Robotics/Lab5/<content>`:
 
 1. **`motor_identification.qrs`** — the TRIK Studio Python program used to collect the data.
 2. **`motor_data/`** — the raw files exactly as the robot wrote them (`wheel_<N>_v_<PWM>.txt`, one per level and wheel). Do not edit them.
 3. **`report.md`** (or a Colab notebook) containing:
-   - a table of `T_m` and `ω_ss` for every PWM level, for each wheel;
+   - a plot of `T_m` and `ω_ss` for every PWM level, for each wheel;
    - a plot of `ω_ss` against the actual voltage `U`, both wheels on the same axes, with the fitted `k_e` and the dead zone marked;
    - one step response with the measured `θ(t)` and the simulated model on the same axes;
    - **3–6 sentences** on where the linear model fails, how much the two wheels differ, and what that difference will do to your robot's odometry next week.

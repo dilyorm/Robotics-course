@@ -107,7 +107,7 @@ Complete one lap of the course track on the **real robot** in the shortest possi
 
 ### Deliverables
 
-Create a repo `CS413 - Robotics/Lab4/<content>`:
+Create a repo `CS413-Robotics/Lab4/<content>`:
 
 1. **`line_race.qrs`** — the visual (block) TRIK Studio program you race with.
 2. **`report.md`** (or a Colab notebook) containing:

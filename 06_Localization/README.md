@@ -2,7 +2,7 @@
 
 ### What localization means for a wheeled robot
 
-Localization answers one question: **where is the robot right now?** — its position `(x, y)` and heading `θ` in a fixed world frame.
+Localization answers one question: **where is the robot right now?** — its position `(x, y)` and heading `φ` in a fixed world frame.
 
 This week we use the simplest answer available on every wheeled robot: **odometry (dead reckoning)**. The robot never sees the world; it only counts how far each wheel has turned and integrates those increments into a pose. Everything later in the course — gyroscope fusion (Week 10), complementary filtering (Week 11), Kalman filtering (Week 12) — exists to fix what goes wrong here.
 
@@ -12,13 +12,12 @@ For a robot with wheel radius `R` and track width `B` (distance between wheels),
 
 | Quantity | Formula |
 |---|---|
-| Left / right wheel travel | `dL = R · Δφ_L`, `dR = R · Δφ_R` (Δφ in **radians**) |
+| Left / right wheel travel | `dL = r · Δθ_L`, `dR = r · Δθ_R` (Δφ in **radians**) |
 | Centre travel | `d = (dL + dR) / 2` |
-| Heading change | `Δθ = (dR − dL) / B` |
-| Position update | `x ← x + d · cos(θ + Δθ/2)`, `y ← y + d · sin(θ + Δθ/2)` |
-| Heading update | `θ ← θ + Δθ` |
+| Heading change | `φ = (θ_R − θ_L) / B` |
+| Position update | `x ← x + d · cos(φ)`, `y ← y + d · sin(φ)` |
 
-TRIK encoders report **degrees** — convert before using the formulas. Measure `R` and `B` on your own robot; do not trust nominal values.
+TRIK encoders report **degrees** — convert before using the formulas. Measure `r` and `B` on your own robot; do not trust nominal values.
 
 ### Why the model and the robot disagree
 
@@ -27,7 +26,7 @@ Odometry is the robot's **belief**, not the truth. The errors are systematic and
 - **Wheel slip** — the encoder turns, the robot does not move (or moves less).
 - **Wrong `R` or `B`** — a 2 % error in `B` turns every 90° corner into a 88° or 92° corner, and the error grows with every turn.
 - **Unequal wheels / motors** — the robot drifts even when commanded straight (recall your Week 5 motor parameters).
-- **Heading error dominates** — a small error in `θ` early on becomes a large error in `(x, y)` later.
+- **Heading error dominates** — a small error in `φ` early on becomes a large error in `(x, y)` later.
 
 The simulator has none of these effects, which is exactly why comparing the two is useful.
 
@@ -102,7 +101,7 @@ print(f'Max error: {err.max():.1f} m')
 
 ### Deliverables
 
-Create a repo `CS413 - Robotics/Lab6/<content>`:
+Create a repo `CS413-Robotics/Lab6/<content>`:
 
 1. **`trajectory_sim.qrs`** and **`trajectory_real.qrs`** — the programs used, with odometry logging.
 2. **`odometry_data_sim.txt`** and **`odometry_data_real.txt`** — the raw logs.
