@@ -7,6 +7,7 @@
 | `odometry_data_sim.txt` | simulator log, `x,y,time` (cm, cm, ms), one line per 20 ms, no header |
 | `odometry_data_real.txt` | real-robot log (2026-10-29, robot trik-6fc169, battery 12.3 V), pulled as `go_to_goal_real_91.txt` and renamed |
 | `Lab7_go_to_goal.ipynb` | Colab analysis: planned vs model vs real, waypoint-miss table, run times, off-path distance, tape end point |
+| `lab7_visual_explanation.pdf` | 12-page visual explanation: controller, angle wrapping, tuning, real run, tape analysis |
 | `sim_trajectory.png` | simulator check: odometry belief vs 2D-model ground truth (end difference 0.15 cm) |
 
 ## Waypoints (m, start frame: x = start direction, y = to the left)
@@ -86,6 +87,6 @@ reached, ~21 s, worst miss 0.9 cm, worst off-path 3.6 cm, no oscillation.
 | real (tape) | — | — | — | ≈ −80° |
 
 The controller did its job on both: every waypoint within 2.7 cm of the robot's own estimate. On the
-real robot it overshot corners 2, 5 and 6 and weaved up to 5.4 cm (57 ms loop + motor lag with `K_θ = 100`).
+real robot it overshot every corner by 2–4.5 cm (simulator ≤ 0.4 cm) and weaved up to 5.4 cm (57 ms loop + motor lag with `K_θ = 100`).
 The tape is 29 cm and about 48° away from the odometry: a localization error (≈ 8 % over-turn → `B` probably
 ≈ 0.18 m, not 0.194, plus slip in the fast turns). Discussion at the end of the notebook.
