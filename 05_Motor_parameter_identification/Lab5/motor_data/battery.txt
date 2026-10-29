@@ -1,0 +1,11 @@
+# TRIK battery voltage (brick.battery().readVoltage()) read just before and just after each run, robot lifted
+# 2026-10-29, trik-6fc169. steps_M4 and steps_M3_run2 were rerun (first attempts lost on a Wi-Fi drop)
+file,u_before_V,u_after_V,time
+steps_M4_91.txt,11.856,11.830,10:39:38
+steps_M4_run2_91.txt,11.895,11.895,10:29:13
+steps_M3_91.txt,11.895,11.882,10:31:15
+steps_M3_run2_91.txt,11.856,11.843,10:41:40
+signal_chirp_M4_91.txt,11.869,11.882,10:34:22
+signal_chirp_M3_91.txt,11.882,11.856,10:35:18
+signal_square_M4_91.txt,11.869,11.856,10:36:27
+signal_square_M3_91.txt,11.882,11.856,10:37:31
