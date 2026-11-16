@@ -109,10 +109,12 @@ the fastest turns are saturation, and encoder error at hard acceleration is whee
 The diagram is generated from `tools/lab9_spec.json` with the TRIK Studio skill's builder:
 
 ```bash
+python tools/make_diagram.py
 python ../trik-studio-skill/trik-studio/scripts/qrs_tool.py build tools/lab9_spec.json \
     -o Lab9_gyro.qrs --template Gyro_demo.qrs --drop-code
 python ../trik-studio-skill/trik-studio/scripts/qrs_tool.py wheels Lab9_gyro.qrs M4 M3
 ```
 
-Edit the spec, rebuild, and the `.qrs` carries the new diagram. `tools/make_notebook.py`
-regenerates the notebook the same way.
+`tools/make_diagram.py` writes the spec (one horizontal row per phase, with a comment for
+every block); edit that script rather than the JSON. `tools/make_notebook.py` regenerates the
+notebook the same way.
