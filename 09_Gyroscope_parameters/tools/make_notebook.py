@@ -217,38 +217,54 @@ non-zero step between distinct raw values, times that factor, is the resolution.
 code(r"""
 rot = df[df.phase.isin(['sin', 'rect'])].reset_index(drop=True)
 ok = np.abs(rot.gz) < 0.9 * np.abs(rot.gz).max()          # leave the saturated part out
-factor, offset_raw = np.polyfit(rot.gz_raw[ok], rot.gz[ok], 1)   # deg/s per count
-pred = factor * rot.gz_raw[ok] + offset_raw
-r2 = 1 - np.sum((rot.gz[ok] - pred) ** 2) / np.sum((rot.gz[ok] - rot.gz[ok].mean()) ** 2)
+# The diagram logs gz_raw through a System Call block. If that column is missing or flat
+# (the 2D model does not run system calls), fall back to the quantisation of gz_cal itself.
+raw_ok = 'gz_raw' in df.columns and st.gz_raw.nunique() > 2
 
-vals = np.unique(st.gz_raw.values)
-steps = np.diff(vals)
-steps = steps[steps > 0]
-step_min = steps.min()
-step_mode = np.bincount(steps).argmax()
+if raw_ok:
+    factor, offset_raw = np.polyfit(rot.gz_raw[ok], rot.gz[ok], 1)   # deg/s per count
+    pred = factor * rot.gz_raw[ok] + offset_raw
+    r2 = 1 - np.sum((rot.gz[ok] - pred) ** 2) / np.sum((rot.gz[ok] - rot.gz[ok].mean()) ** 2)
+    vals = np.unique(st.gz_raw.values)
+    steps = np.diff(vals)
+    steps = steps[steps > 0]
+    step_min, step_mode = steps.min(), np.bincount(steps).argmax()
+    res_min, res_mode = step_min * factor, step_mode * factor
+    x_raw, x_lab = rot.gz_raw[ok], 'gz_raw (counts)'
+else:
+    factor = None
+    vals = np.unique(st.gz_cal.values)
+    steps = np.diff(vals)
+    steps = steps[steps > 0]
+    step_min, step_mode = steps.min(), np.bincount(steps).argmax()
+    res_min, res_mode = step_min / 1000.0, step_mode / 1000.0
+    x_raw, x_lab = rot.gz_cal[ok], 'gz_cal (mdeg/s)'
 
 fig, ax = plt.subplots(1, 2, figsize=(12, 4))
-ax[0].plot(rot.gz_raw[ok], rot.gz[ok], '.', ms=1, alpha=0.3)
-ax[0].plot(rot.gz_raw[ok], pred, 'r-', lw=1, label='fit %.4f deg/s per count' % factor)
-ax[0].set_xlabel('gz_raw (counts)')
+ax[0].plot(x_raw, rot.gz[ok], '.', ms=1, alpha=0.3)
+if raw_ok:
+    ax[0].plot(x_raw, pred, 'r-', lw=1, label='fit %.4f deg/s per count' % factor)
+    ax[0].set_title('raw to deg/s, $R^2$ = %.4f' % r2)
+    ax[0].legend()
+ax[0].set_xlabel(x_lab)
 ax[0].set_ylabel('gz_cal (deg/s)')
-ax[0].set_title('raw to deg/s, $R^2$ = %.4f' % r2)
-ax[0].legend()
 ax[0].grid(alpha=0.3)
 
-ax[1].hist(st.gz_raw.values, bins=60)
-ax[1].set_xlabel('gz_raw (counts) at rest')
+ax[1].hist(np.unique(st.gz_cal.values) if not raw_ok else st.gz_raw.values, bins=60)
+ax[1].set_xlabel(x_lab + ' at rest')
 ax[1].set_ylabel('samples')
 ax[1].set_title('quantisation at rest')
 ax[1].grid(alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-print('raw -> deg/s factor: %.5f deg/s per count' % factor)
-print('distinct raw values at rest: %d, smallest step %d count(s), most common step %d'
-      % (len(vals), step_min, step_mode))
-print('resolution: %.4f deg/s (smallest) / %.4f deg/s (typical)'
-      % (step_min * factor, step_mode * factor))
+if raw_ok:
+    print('raw -> deg/s factor: %.5f deg/s per count' % factor)
+    print('distinct raw values at rest: %d, smallest step %d count(s), most common step %d'
+          % (len(vals), step_min, step_mode))
+else:
+    print('no usable gz_raw column - resolution taken from gz_cal directly')
+print('resolution: %.4f deg/s (smallest) / %.4f deg/s (typical)' % (res_min, res_mode))
 """)
 
 md(r"""
@@ -428,7 +444,7 @@ def smooth(x, n=9):
     return np.convolve(x, k, mode='same')
 
 sim = gyro_sim(smooth(rate_enc), rot.t.values, b0, d / 60, sigma, s_est,
-               max(abs(wmax_pos), abs(wmax_neg)), step_mode * factor)
+               max(abs(wmax_pos), abs(wmax_neg)), res_mode)
 
 fig, ax = plt.subplots(figsize=(12, 4))
 ax.plot(rot.t, rot.gz, lw=0.6, label='measured')
@@ -456,9 +472,10 @@ table = pd.DataFrame([
     ('Bias drift', 'd', '%.4f' % d, 'deg/s/min', '30-s window means, line fit'),
     ('Heading drift, uncorrected', '', '%.2f' % slope_raw, 'deg/min', 'slope of theta(t), static'),
     ('Measurement range', 'wmax', '+%.1f / %.1f' % (wmax_pos, wmax_neg), 'deg/s', 'saturation test, |u| = 100 %'),
-    ('Resolution', 'Delta', '%.4f' % (step_mode * factor), 'deg/s', 'distinct raw values, static'),
+    ('Resolution', 'Delta', '%.4f' % res_mode, 'deg/s', 'distinct values, static'),
     ('Noise std', 'sigma', '%.4f' % sigma, 'deg/s', 'static, 3 min, b0 removed'),
-    ('Raw -> deg/s factor', '', '%.5f' % factor, 'deg/s per count', 'gz_cal vs gz_raw, rotation'),
+    ('Raw -> deg/s factor', '', '%.5f' % factor if raw_ok else 'n/a', 'deg/s per count',
+     'gz_cal vs gz_raw, rotation' if raw_ok else 'log has no gz_raw column'),
     ('Scale-factor error CCW', 's', '%+.2f' % (100 * s_ccw), '%', 'theta_gyro vs theta_enc, CCW, unsaturated'),
     ('Scale-factor error CW', 's', '%+.2f' % (100 * s_cw), '%', 'theta_gyro vs theta_enc, CW, unsaturated'),
     ('Positive rotation', '', 'CCW' if np.corrcoef(th_enc, th_gyro)[0, 1] > 0 else 'CW', '-', 'sign check, §6'),

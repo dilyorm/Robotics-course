@@ -18,19 +18,21 @@ in the notebook.
 
 ## 1. Open the program in TRIK Studio
 
-`Lab9_gyro.qrs` is a **text program** in Python: open it with *File → Open*, and the code
-appears in the editor. If your TRIK Studio prefers a fresh project, create a *Text program*
-for the TRIK kit and paste `lab9_gyro.py` into it.
+`Lab9_gyro.qrs` is a **block diagram**: open it with *File → Open* and the blocks appear on the
+canvas, each part with a comment beside it. `lab9_gyro.py` is the same logic as code, if you
+prefer to read it that way.
 
-Check the ports at the top of the file against your robot: on the course robots the right
-wheel is **M3/E3** and the left is **M4/E4**.
+Check the ports against your robot: on the course robots the right wheel is **M3/E3** and the
+left is **M4/E4**. The 2D model is already set to left = M4, right = M3.
 
 Run it once in the **2D model** to see the sequence. Two things to know about that run:
 
 - The model's gyro is ideal, so you will get $b_0 \approx 0$, $\sigma \approx 0$ and $s \approx 0$.
   That is expected — the real parameters must come from the real robot.
-- The full sequence is 4.5 minutes of simulated time. To make a quick dry run, temporarily set
-  `WARMUP_S = 2`, `STATIC_S = 5`, `PERIOD = 0.5` and put them back before the real run.
+- The model does not run System Call blocks, so the `gz_raw` column stays 0 there. The notebook
+  falls back to the quantisation of `gz_cal` when that happens.
+- The full sequence is 4.5 minutes of simulated time. To make a quick dry run, shorten the Timer
+  blocks (120000 → 2000, 180000 → 5000, 36000 → 2000) and put them back before the real run.
 
 ## 2. What the program does
 
@@ -47,6 +49,11 @@ and the gyro saturates — that is the point of that step.
 
 **Do not touch the robot during `warmup` and `static`.** A bump on the table during the static
 log shows up as a spike in the noise histogram and ruins $b_0$.
+
+The diagram reads top to bottom: initialise → remove the old log → write the header → clear the
+encoders → warm-up timer → one loop per phase. Inside each loop: read the sensors, build one CSV
+line, and every 200 lines write the buffer to the card. The rotation loops set the wheel power
+from the signal, then log.
 
 ## 3. Get the log off the robot
 
@@ -99,11 +106,13 @@ the fastest turns are saturation, and encoder error at hard acceleration is whee
 
 ## Rebuilding the project file
 
-`Lab9_gyro.qrs` is generated from `lab9_gyro.py`:
+The diagram is generated from `tools/lab9_spec.json` with the TRIK Studio skill's builder:
 
 ```bash
-python tools/build_qrs.py
+python ../trik-studio-skill/trik-studio/scripts/qrs_tool.py build tools/lab9_spec.json \
+    -o Lab9_gyro.qrs --template Gyro_demo.qrs --drop-code
+python ../trik-studio-skill/trik-studio/scripts/qrs_tool.py wheels Lab9_gyro.qrs M4 M3
 ```
 
-Edit the `.py`, rebuild, and the `.qrs` carries the new code. `tools/make_notebook.py`
+Edit the spec, rebuild, and the `.qrs` carries the new diagram. `tools/make_notebook.py`
 regenerates the notebook the same way.

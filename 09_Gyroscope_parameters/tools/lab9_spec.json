@@ -1,0 +1,905 @@
+{
+ "blocks": [
+  {
+   "id": "start",
+   "type": "InitialNode",
+   "x": 0,
+   "y": 0,
+   "props": {}
+  },
+  {
+   "id": "c_title",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": -100,
+   "props": {
+    "Comment": "Lab 9 - gyroscope parameters\nOne run: 2 min warm-up, 3 min static log, then the rotation run\n(sine and square wave, amplitude 30 -> 60 -> 150 %), 3 s rest.\nThe robot only logs. All calibration and fitting is done offline\nin Gyro_parameters.ipynb."
+   }
+  },
+  {
+   "id": "init",
+   "type": "Function",
+   "x": 0,
+   "y": 100,
+   "props": {
+    "Body": "-- geometry from Lab 5, used offline: r = 0.042 m, B = 0.194 m\nphase = \"init\"\nu = 0\nt = 0\nt0 = 0\nA = 0\nn = 0\nbuf = \"\"\ngzcal = 0\ngzraw = 0\ntus = 0\nline = \"# t_us,phase,u,gz_cal,gz_raw,encL,encR\\n\""
+   }
+  },
+  {
+   "id": "c_init",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 100,
+   "props": {
+    "Comment": "Variables:\nphase - label written in every CSV line\nu     - commanded wheel power, % (right wheel; left gets -u)\nt     - seconds since the phase started\nt0    - phase start, ms\nA     - amplitude of the rotation signal, %\nn     - samples waiting in buf\nbuf   - CSV lines not yet written to the card\ngzcal - gyroscope rate, mdeg/s\ngzraw - uncalibrated gyroscope output, counts\ntus   - timestamp, us"
+   }
+  },
+  {
+   "id": "rm",
+   "type": "TrikRemoveFile",
+   "x": 0,
+   "y": 200,
+   "props": {
+    "File": "lab9_gyro.csv"
+   }
+  },
+  {
+   "id": "c_rm",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 200,
+   "props": {
+    "Comment": "Write To File appends, so the old log is removed first.\nThe file lands in the robot's scripts folder."
+   }
+  },
+  {
+   "id": "hdr",
+   "type": "TrikWriteToFile",
+   "x": 0,
+   "y": 300,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "line"
+   }
+  },
+  {
+   "id": "clr",
+   "type": "TrikV62ClearEncoder",
+   "x": 0,
+   "y": 400,
+   "props": {
+    "Ports": "E3, E4"
+   }
+  },
+  {
+   "id": "p_warm",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 500,
+   "props": {
+    "PrintText": "warmup - do not touch",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "t_warm",
+   "type": "Timer",
+   "x": 0,
+   "y": 600,
+   "props": {
+    "Delay": "120000"
+   }
+  },
+  {
+   "id": "c_warm",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 500,
+   "props": {
+    "Comment": "Warm-up: 2 min, motors off, not logged.\nA MEMS gyro needs to reach thermal equilibrium before its\noffset is stable. Do not touch the robot or the table."
+   }
+  },
+  {
+   "id": "p_static",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 700,
+   "props": {
+    "PrintText": "static - 3 min",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "f_static",
+   "type": "Function",
+   "x": 0,
+   "y": 800,
+   "props": {
+    "Body": "phase = \"static\"\nu = 0\nt0 = time()"
+   }
+  },
+  {
+   "id": "l_static",
+   "type": "PreconditionalLoop",
+   "x": 0,
+   "y": 900,
+   "props": {
+    "Condition": "time() - t0 < 180000"
+   }
+  },
+  {
+   "id": "c_static",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 700,
+   "props": {
+    "Comment": "Static run: 3 min, motors off, logged.\nGives the offset b0, the drift d, the resolution and the noise sigma."
+   }
+  },
+  {
+   "id": "s_static",
+   "type": "TrikSystem",
+   "x": 0,
+   "y": 1000,
+   "props": {
+    "Code": "true",
+    "Evaluate": "false",
+    "Command": "gzraw = brick.gyroscope().readRawData()[2];"
+   }
+  },
+  {
+   "id": "g_static",
+   "type": "Function",
+   "x": 0,
+   "y": 1100,
+   "props": {
+    "Body": "gzcal = gyroscope[2]\ntus = time() * 1000\nline = tus .. \",\" .. phase .. \",\" .. u .. \",\" .. gzcal .. \",\" .. gzraw .. \",\" .. encoder4 .. \",\" .. encoder3 .. \"\\n\"\nbuf = buf .. line\nn = n + 1"
+   }
+  },
+  {
+   "id": "if_static",
+   "type": "IfBlock",
+   "x": 0,
+   "y": 1200,
+   "props": {
+    "Condition": "n >= 200"
+   }
+  },
+  {
+   "id": "w_static",
+   "type": "TrikWriteToFile",
+   "x": 300,
+   "y": 1300,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "buf"
+   }
+  },
+  {
+   "id": "r_static",
+   "type": "Function",
+   "x": 300,
+   "y": 1400,
+   "props": {
+    "Body": "buf = \"\"\nn = 0"
+   }
+  },
+  {
+   "id": "fi_static",
+   "type": "FiBlock",
+   "x": 300,
+   "y": 1500,
+   "props": {}
+  },
+  {
+   "id": "t_static",
+   "type": "Timer",
+   "x": 0,
+   "y": 1600,
+   "props": {
+    "Delay": "10"
+   }
+  },
+  {
+   "id": "c_log",
+   "type": "CommentBlock",
+   "x": 700,
+   "y": 1000,
+   "props": {
+    "Comment": "One sample every ~10 ms:\n  System Call reads the uncalibrated gyro output (blocks cannot),\n  Expression builds the CSV line and appends it to buf.\nEvery 200 samples buf is written to the card in one go, so file\nI/O does not stretch the sampling period."
+   }
+  },
+  {
+   "id": "p_sin",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 1700,
+   "props": {
+    "PrintText": "sin - 36 s",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "f_sin",
+   "type": "Function",
+   "x": 0,
+   "y": 1800,
+   "props": {
+    "Body": "phase = \"sin\"\nt0 = time()"
+   }
+  },
+  {
+   "id": "l_sin",
+   "type": "PreconditionalLoop",
+   "x": 0,
+   "y": 1900,
+   "props": {
+    "Condition": "time() - t0 < 36000"
+   }
+  },
+  {
+   "id": "c_sin",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 1700,
+   "props": {
+    "Comment": "In-place rotation, sine, period 4 s.\nAmplitude 30 % for 12 s, then 60 %, then 150 %.\n150 % is clipped to 100 % wheel power, so the robot turns at its\nmaximum rate and the gyro saturates - that is the point of the\nlast step (measurement range, section 3)."
+   }
+  },
+  {
+   "id": "u_sin",
+   "type": "Function",
+   "x": 0,
+   "y": 2000,
+   "props": {
+    "Body": "t = (time() - t0) / 1000\nA = 30 + 15 * (sgn(t - 12) + 1) + 45 * (sgn(t - 24) + 1)\nu = A * sin(2 * pi * t / 4)\nu = max(-100, min(100, u))"
+   }
+  },
+  {
+   "id": "m3_sin",
+   "type": "TrikV6EnginesForward",
+   "x": 0,
+   "y": 2100,
+   "props": {
+    "Ports": "M3",
+    "Power": "u"
+   }
+  },
+  {
+   "id": "m4_sin",
+   "type": "TrikV6EnginesBackward",
+   "x": 0,
+   "y": 2200,
+   "props": {
+    "Ports": "M4",
+    "Power": "u"
+   }
+  },
+  {
+   "id": "s_sin",
+   "type": "TrikSystem",
+   "x": 0,
+   "y": 2300,
+   "props": {
+    "Code": "true",
+    "Evaluate": "false",
+    "Command": "gzraw = brick.gyroscope().readRawData()[2];"
+   }
+  },
+  {
+   "id": "g_sin",
+   "type": "Function",
+   "x": 0,
+   "y": 2400,
+   "props": {
+    "Body": "gzcal = gyroscope[2]\ntus = time() * 1000\nline = tus .. \",\" .. phase .. \",\" .. u .. \",\" .. gzcal .. \",\" .. gzraw .. \",\" .. encoder4 .. \",\" .. encoder3 .. \"\\n\"\nbuf = buf .. line\nn = n + 1"
+   }
+  },
+  {
+   "id": "if_sin",
+   "type": "IfBlock",
+   "x": 0,
+   "y": 2500,
+   "props": {
+    "Condition": "n >= 200"
+   }
+  },
+  {
+   "id": "w_sin",
+   "type": "TrikWriteToFile",
+   "x": 300,
+   "y": 2600,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "buf"
+   }
+  },
+  {
+   "id": "r_sin",
+   "type": "Function",
+   "x": 300,
+   "y": 2700,
+   "props": {
+    "Body": "buf = \"\"\nn = 0"
+   }
+  },
+  {
+   "id": "fi_sin",
+   "type": "FiBlock",
+   "x": 300,
+   "y": 2800,
+   "props": {}
+  },
+  {
+   "id": "t_sin",
+   "type": "Timer",
+   "x": 0,
+   "y": 2900,
+   "props": {
+    "Delay": "10"
+   }
+  },
+  {
+   "id": "p_rect",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 3000,
+   "props": {
+    "PrintText": "rect - 36 s",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "f_rect",
+   "type": "Function",
+   "x": 0,
+   "y": 3100,
+   "props": {
+    "Body": "phase = \"rect\"\nt0 = time()"
+   }
+  },
+  {
+   "id": "l_rect",
+   "type": "PreconditionalLoop",
+   "x": 0,
+   "y": 3200,
+   "props": {
+    "Condition": "time() - t0 < 36000"
+   }
+  },
+  {
+   "id": "c_rect",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 3000,
+   "props": {
+    "Comment": "The same with a square wave: the robot spends most of the time\nat full turn rate, which shows whether the scale factor holds\nat high rate (section 6)."
+   }
+  },
+  {
+   "id": "u_rect",
+   "type": "Function",
+   "x": 0,
+   "y": 3300,
+   "props": {
+    "Body": "t = (time() - t0) / 1000\nA = 30 + 15 * (sgn(t - 12) + 1) + 45 * (sgn(t - 24) + 1)\nu = A * sgn(sin(2 * pi * t / 4))\nu = max(-100, min(100, u))"
+   }
+  },
+  {
+   "id": "m3_rect",
+   "type": "TrikV6EnginesForward",
+   "x": 0,
+   "y": 3400,
+   "props": {
+    "Ports": "M3",
+    "Power": "u"
+   }
+  },
+  {
+   "id": "m4_rect",
+   "type": "TrikV6EnginesBackward",
+   "x": 0,
+   "y": 3500,
+   "props": {
+    "Ports": "M4",
+    "Power": "u"
+   }
+  },
+  {
+   "id": "s_rect",
+   "type": "TrikSystem",
+   "x": 0,
+   "y": 3600,
+   "props": {
+    "Code": "true",
+    "Evaluate": "false",
+    "Command": "gzraw = brick.gyroscope().readRawData()[2];"
+   }
+  },
+  {
+   "id": "g_rect",
+   "type": "Function",
+   "x": 0,
+   "y": 3700,
+   "props": {
+    "Body": "gzcal = gyroscope[2]\ntus = time() * 1000\nline = tus .. \",\" .. phase .. \",\" .. u .. \",\" .. gzcal .. \",\" .. gzraw .. \",\" .. encoder4 .. \",\" .. encoder3 .. \"\\n\"\nbuf = buf .. line\nn = n + 1"
+   }
+  },
+  {
+   "id": "if_rect",
+   "type": "IfBlock",
+   "x": 0,
+   "y": 3800,
+   "props": {
+    "Condition": "n >= 200"
+   }
+  },
+  {
+   "id": "w_rect",
+   "type": "TrikWriteToFile",
+   "x": 300,
+   "y": 3900,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "buf"
+   }
+  },
+  {
+   "id": "r_rect",
+   "type": "Function",
+   "x": 300,
+   "y": 4000,
+   "props": {
+    "Body": "buf = \"\"\nn = 0"
+   }
+  },
+  {
+   "id": "fi_rect",
+   "type": "FiBlock",
+   "x": 300,
+   "y": 4100,
+   "props": {}
+  },
+  {
+   "id": "t_rect",
+   "type": "Timer",
+   "x": 0,
+   "y": 4200,
+   "props": {
+    "Delay": "10"
+   }
+  },
+  {
+   "id": "stop",
+   "type": "TrikV6EnginesStop",
+   "x": 0,
+   "y": 4300,
+   "props": {
+    "Ports": "M3, M4",
+    "Mode": "float"
+   }
+  },
+  {
+   "id": "p_rest",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 4400,
+   "props": {
+    "PrintText": "rest - 3 s",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "f_rest",
+   "type": "Function",
+   "x": 0,
+   "y": 4500,
+   "props": {
+    "Body": "phase = \"rest\"\nu = 0\nt0 = time()"
+   }
+  },
+  {
+   "id": "l_rest",
+   "type": "PreconditionalLoop",
+   "x": 0,
+   "y": 4600,
+   "props": {
+    "Condition": "time() - t0 < 3000"
+   }
+  },
+  {
+   "id": "c_rest",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 4400,
+   "props": {
+    "Comment": "3 s at standstill, logged, so the final gyro and encoder angles\ncan be compared with the robot at rest."
+   }
+  },
+  {
+   "id": "s_rest",
+   "type": "TrikSystem",
+   "x": 0,
+   "y": 4700,
+   "props": {
+    "Code": "true",
+    "Evaluate": "false",
+    "Command": "gzraw = brick.gyroscope().readRawData()[2];"
+   }
+  },
+  {
+   "id": "g_rest",
+   "type": "Function",
+   "x": 0,
+   "y": 4800,
+   "props": {
+    "Body": "gzcal = gyroscope[2]\ntus = time() * 1000\nline = tus .. \",\" .. phase .. \",\" .. u .. \",\" .. gzcal .. \",\" .. gzraw .. \",\" .. encoder4 .. \",\" .. encoder3 .. \"\\n\"\nbuf = buf .. line\nn = n + 1"
+   }
+  },
+  {
+   "id": "if_rest",
+   "type": "IfBlock",
+   "x": 0,
+   "y": 4900,
+   "props": {
+    "Condition": "n >= 200"
+   }
+  },
+  {
+   "id": "w_rest",
+   "type": "TrikWriteToFile",
+   "x": 300,
+   "y": 5000,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "buf"
+   }
+  },
+  {
+   "id": "r_rest",
+   "type": "Function",
+   "x": 300,
+   "y": 5100,
+   "props": {
+    "Body": "buf = \"\"\nn = 0"
+   }
+  },
+  {
+   "id": "fi_rest",
+   "type": "FiBlock",
+   "x": 300,
+   "y": 5200,
+   "props": {}
+  },
+  {
+   "id": "t_rest",
+   "type": "Timer",
+   "x": 0,
+   "y": 5300,
+   "props": {
+    "Delay": "10"
+   }
+  },
+  {
+   "id": "flush",
+   "type": "TrikWriteToFile",
+   "x": 0,
+   "y": 5400,
+   "props": {
+    "File": "lab9_gyro.csv",
+    "Text": "buf"
+   }
+  },
+  {
+   "id": "sync",
+   "type": "TrikSystem",
+   "x": 0,
+   "y": 5500,
+   "props": {
+    "Code": "true",
+    "Evaluate": "false",
+    "Command": "script.system(\"sync\", true);"
+   }
+  },
+  {
+   "id": "p_done",
+   "type": "TrikPrintText",
+   "x": 0,
+   "y": 5600,
+   "props": {
+    "PrintText": "done",
+    "FontSize": "20"
+   }
+  },
+  {
+   "id": "end",
+   "type": "FinalNode",
+   "x": 0,
+   "y": 5700,
+   "props": {}
+  },
+  {
+   "id": "c_end",
+   "type": "CommentBlock",
+   "x": 400,
+   "y": 5400,
+   "props": {
+    "Comment": "Write the last partial block, then sync so the file survives\na power-off. Copy lab9_gyro.csv off the robot and run the notebook."
+   }
+  }
+ ],
+ "links": [
+  [
+   "start",
+   "init"
+  ],
+  [
+   "init",
+   "rm"
+  ],
+  [
+   "rm",
+   "hdr"
+  ],
+  [
+   "hdr",
+   "clr"
+  ],
+  [
+   "clr",
+   "p_warm"
+  ],
+  [
+   "p_warm",
+   "t_warm"
+  ],
+  [
+   "t_warm",
+   "p_static"
+  ],
+  [
+   "p_static",
+   "f_static"
+  ],
+  [
+   "f_static",
+   "l_static"
+  ],
+  [
+   "l_static",
+   "s_static",
+   "iteration"
+  ],
+  [
+   "t_static",
+   "l_static"
+  ],
+  [
+   "s_static",
+   "g_static"
+  ],
+  [
+   "g_static",
+   "if_static"
+  ],
+  [
+   "if_static",
+   "w_static",
+   "true"
+  ],
+  [
+   "if_static",
+   "fi_static",
+   "false"
+  ],
+  [
+   "w_static",
+   "r_static"
+  ],
+  [
+   "r_static",
+   "fi_static"
+  ],
+  [
+   "fi_static",
+   "t_static"
+  ],
+  [
+   "l_static",
+   "p_sin"
+  ],
+  [
+   "p_sin",
+   "f_sin"
+  ],
+  [
+   "f_sin",
+   "l_sin"
+  ],
+  [
+   "l_sin",
+   "u_sin",
+   "iteration"
+  ],
+  [
+   "t_sin",
+   "l_sin"
+  ],
+  [
+   "u_sin",
+   "m3_sin"
+  ],
+  [
+   "m3_sin",
+   "m4_sin"
+  ],
+  [
+   "m4_sin",
+   "s_sin"
+  ],
+  [
+   "s_sin",
+   "g_sin"
+  ],
+  [
+   "g_sin",
+   "if_sin"
+  ],
+  [
+   "if_sin",
+   "w_sin",
+   "true"
+  ],
+  [
+   "if_sin",
+   "fi_sin",
+   "false"
+  ],
+  [
+   "w_sin",
+   "r_sin"
+  ],
+  [
+   "r_sin",
+   "fi_sin"
+  ],
+  [
+   "fi_sin",
+   "t_sin"
+  ],
+  [
+   "l_sin",
+   "p_rect"
+  ],
+  [
+   "p_rect",
+   "f_rect"
+  ],
+  [
+   "f_rect",
+   "l_rect"
+  ],
+  [
+   "l_rect",
+   "u_rect",
+   "iteration"
+  ],
+  [
+   "t_rect",
+   "l_rect"
+  ],
+  [
+   "u_rect",
+   "m3_rect"
+  ],
+  [
+   "m3_rect",
+   "m4_rect"
+  ],
+  [
+   "m4_rect",
+   "s_rect"
+  ],
+  [
+   "s_rect",
+   "g_rect"
+  ],
+  [
+   "g_rect",
+   "if_rect"
+  ],
+  [
+   "if_rect",
+   "w_rect",
+   "true"
+  ],
+  [
+   "if_rect",
+   "fi_rect",
+   "false"
+  ],
+  [
+   "w_rect",
+   "r_rect"
+  ],
+  [
+   "r_rect",
+   "fi_rect"
+  ],
+  [
+   "fi_rect",
+   "t_rect"
+  ],
+  [
+   "l_rect",
+   "stop"
+  ],
+  [
+   "stop",
+   "p_rest"
+  ],
+  [
+   "p_rest",
+   "f_rest"
+  ],
+  [
+   "f_rest",
+   "l_rest"
+  ],
+  [
+   "l_rest",
+   "s_rest",
+   "iteration"
+  ],
+  [
+   "t_rest",
+   "l_rest"
+  ],
+  [
+   "s_rest",
+   "g_rest"
+  ],
+  [
+   "g_rest",
+   "if_rest"
+  ],
+  [
+   "if_rest",
+   "w_rest",
+   "true"
+  ],
+  [
+   "if_rest",
+   "fi_rest",
+   "false"
+  ],
+  [
+   "w_rest",
+   "r_rest"
+  ],
+  [
+   "r_rest",
+   "fi_rest"
+  ],
+  [
+   "fi_rest",
+   "t_rest"
+  ],
+  [
+   "l_rest",
+   "flush"
+  ],
+  [
+   "flush",
+   "sync"
+  ],
+  [
+   "sync",
+   "p_done"
+  ],
+  [
+   "p_done",
+   "end"
+  ]
+ ]
+}
