@@ -1,0 +1,509 @@
+{
+"ClearScreen": {
+"label": "Clear Screen",
+"props": {
+"Redraw": "true"
+}
+},
+"CommentBlock": {
+"label": "Comment",
+"props": {
+"Comment": "Enter some text here..."
+}
+},
+"FiBlock": {
+"label": "End if",
+"props": {}
+},
+"FinalNode": {
+"label": "Final Node",
+"props": {}
+},
+"Fork": {
+"label": "Fork",
+"props": {}
+},
+"Function": {
+"label": "Expression",
+"props": {
+"Body": ""
+}
+},
+"GetButtonCode": {
+"label": "Get Button Code",
+"props": {
+"Variable": "x",
+"Wait": "true"
+}
+},
+"IfBlock": {
+"label": "Condition",
+"props": {
+"Condition": "x > 0"
+}
+},
+"InitialNode": {
+"label": "Initial Node",
+"props": {}
+},
+"Input": {
+"label": "User Input",
+"props": {
+"default": "",
+"prompt": "",
+"variable": "x"
+}
+},
+"Join": {
+"label": "Join",
+"props": {}
+},
+"KillThread": {
+"label": "Kill Thread",
+"props": {
+"Thread": "main"
+}
+},
+"Loop": {
+"label": "Loop",
+"props": {
+"Iterations": "10"
+}
+},
+"MarkerDown": {
+"label": "Marker Down",
+"props": {
+"Color": "blue"
+}
+},
+"MarkerUp": {
+"label": "Marker Up",
+"props": {}
+},
+"PreconditionalLoop": {
+"label": "Pre-conditional Loop",
+"props": {
+"Condition": "x > 0"
+}
+},
+"PrintText": {
+"label": "Print Text",
+"props": {
+"Evaluate": "false",
+"PrintText": "Enter some text here",
+"Redraw": "true",
+"XCoordinateText": "1",
+"YCoordinateText": "1"
+}
+},
+"Randomizer": {
+"label": "Random Initialization",
+"props": {
+"LowerBound": "0",
+"UpperBound": "10",
+"Variable": "x"
+}
+},
+"ReceiveMessageThreads": {
+"label": "Receive Message From Thread",
+"props": {
+"Synchronized": "true",
+"Variable": ""
+}
+},
+"RobotsDiagramNode": {
+"label": "Robot`s Behaviour Diagram",
+"props": {
+"devicesConfiguration": ""
+}
+},
+"SendMessageThreads": {
+"label": "Send Message To Thread",
+"props": {
+"Message": "",
+"Thread": ""
+}
+},
+"Subprogram": {
+"label": "Subprogram",
+"props": {}
+},
+"SwitchBlock": {
+"label": "Switch",
+"props": {
+"Expression": "x"
+}
+},
+"Timer": {
+"label": "Timer",
+"props": {
+"Delay": "1000"
+}
+},
+"TrikAngularServo": {
+"label": "Angular Servo",
+"props": {
+"Ports": "E1",
+"Power": "0"
+}
+},
+"TrikCalibrateGyroscope": {
+"label": "Calibrate gyroscope",
+"props": {}
+},
+"TrikDetect": {
+"label": "Detect by Videocamera",
+"props": {
+"Mode": "line",
+"VideoPort": "video2"
+}
+},
+"TrikDetectorToVariable": {
+"label": "Line Detector into Variable",
+"props": {
+"Variable": "err",
+"VideoPort": "video2"
+}
+},
+"TrikDrawArc": {
+"label": "Draw Arc",
+"props": {
+"HeightArc": "5",
+"Redraw": "true",
+"SpanAngle": "20",
+"StartAngle": "20",
+"WidthArc": "5",
+"XCoordinateArc": "0",
+"YCoordinateArc": "0"
+}
+},
+"TrikDrawEllipse": {
+"label": "Draw Ellipse",
+"props": {
+"Filled": "false",
+"HeightEllipse": "5",
+"Redraw": "true",
+"WidthEllipse": "5",
+"XCoordinateEllipse": "0",
+"YCoordinateEllipse": "0"
+}
+},
+"TrikDrawLine": {
+"label": "Draw Line",
+"props": {
+"Redraw": "true",
+"X1CoordinateLine": "0",
+"X2CoordinateLine": "10",
+"Y1CoordinateLine": "0",
+"Y2CoordinateLine": "10"
+}
+},
+"TrikDrawPixel": {
+"label": "Draw Pixel",
+"props": {
+"Redraw": "true",
+"XCoordinatePix": "5",
+"YCoordinatePix": "5"
+}
+},
+"TrikDrawRect": {
+"label": "Draw Rectangle",
+"props": {
+"Filled": "false",
+"HeightRect": "5",
+"Redraw": "true",
+"WidthRect": "5",
+"XCoordinateRect": "0",
+"YCoordinateRect": "0"
+}
+},
+"TrikInitCamera": {
+"label": "Initialize Videocamera",
+"props": {
+"DrawStream": "true",
+"Mode": "line",
+"VideoPort": "video2"
+}
+},
+"TrikInitVideoStreaming": {
+"label": "Enable Video Streaming",
+"props": {
+"Detached": "false",
+"Grayscaled": "false",
+"Quality": "30",
+"VideoPort": "video2"
+}
+},
+"TrikJoinNetwork": {
+"label": "Join Network",
+"props": {
+"Address": "192.168.77.1",
+"HullNumber": "1",
+"IPPort": "8889"
+}
+},
+"TrikLed": {
+"label": "Led",
+"props": {
+"Color": "red"
+}
+},
+"TrikPlayTone": {
+"label": "Play Sound",
+"props": {
+"FileName": "media/beep.wav"
+}
+},
+"TrikPlayToneHz": {
+"label": "Play Tone",
+"props": {
+"Duration": "1000",
+"Frequency": "1000"
+}
+},
+"TrikPrintText": {
+"label": "Print Text",
+"props": {
+"Evaluate": "false",
+"FontSize": "20",
+"PrintText": "Enter some text here",
+"Redraw": "true",
+"XCoordinateText": "1",
+"YCoordinateText": "1"
+}
+},
+"TrikReadLidar": {
+"label": "Read Lidar To Variable",
+"props": {
+"variable": "x"
+}
+},
+"TrikRemoveFile": {
+"label": "Remove File",
+"props": {
+"File": "output.txt"
+}
+},
+"TrikSadSmile": {
+"label": "Sad Smile",
+"props": {}
+},
+"TrikSay": {
+"label": "Say",
+"props": {
+"Evaluate": "false",
+"Text": "Hi!"
+}
+},
+"TrikSendMessage": {
+"label": "Send message",
+"props": {
+"HullNumber": "",
+"Message": ""
+}
+},
+"TrikSetBackground": {
+"label": "Background Color",
+"props": {
+"Color": "white",
+"Redraw": "true"
+}
+},
+"TrikSetPainterColor": {
+"label": "Painter Color",
+"props": {
+"Color": "black"
+}
+},
+"TrikSetPainterWidth": {
+"label": "Painter Width",
+"props": {
+"Width": "1"
+}
+},
+"TrikSmile": {
+"label": "Smile",
+"props": {}
+},
+"TrikStopCamera": {
+"label": "Stop Videocamera",
+"props": {
+"Mode": "line",
+"StopCameraMode": "StopAll",
+"VideoPort": "video2"
+}
+},
+"TrikStopVideoStreaming": {
+"label": "Disable Video Streaming",
+"props": {
+"VideoPort": "video2"
+}
+},
+"TrikSystem": {
+"label": "System Call",
+"props": {
+"Code": "false",
+"Command": "echo 123",
+"Evaluate": "false"
+}
+},
+"TrikV62AngularServo": {
+"label": "Angular Servo",
+"props": {
+"Ports": "S1",
+"Power": "0"
+}
+},
+"TrikV62ClearEncoder": {
+"label": "Clear Encoder",
+"props": {
+"Ports": "E1, E2, E3, E4"
+}
+},
+"TrikV62WaitForEncoder": {
+"label": "Wait for Encoder",
+"props": {
+"Port": "E3",
+"Sign": "greater",
+"TachoLimit": ""
+}
+},
+"TrikV6ClearEncoder": {
+"label": "Clear Encoder",
+"props": {
+"Ports": "B1, B2, B3, B4"
+}
+},
+"TrikV6EnginesBackward": {
+"label": "Motors Backward",
+"props": {
+"Ports": "M3, M4",
+"Power": "100"
+}
+},
+"TrikV6EnginesForward": {
+"label": "Motors Forward",
+"props": {
+"Ports": "M3, M4",
+"Power": "100"
+}
+},
+"TrikV6EnginesStop": {
+"label": "Stop Motors",
+"props": {
+"Mode": "float",
+"Ports": "M1, M2, M3, M4"
+}
+},
+"TrikWaitForAccelerometer": {
+"label": "Wait for Accelerometer",
+"props": {
+"Acceleration": "0",
+"AccelerationAxis": "xAxis",
+"Sign": "greater"
+}
+},
+"TrikWaitForButton": {
+"label": "Wait for Button",
+"props": {
+"Button": "Up"
+}
+},
+"TrikWaitForEncoder": {
+"label": "Wait for Encoder",
+"props": {
+"Port": "B3",
+"Sign": "greater",
+"TachoLimit": ""
+}
+},
+"TrikWaitForGyroscope": {
+"label": "Wait for Gyroscope",
+"props": {
+"Degrees": "0",
+"Sign": "greater"
+}
+},
+"TrikWaitForIRDistance": {
+"label": "Wait for Infrared Distance",
+"props": {
+"Distance": "0",
+"Port": "A1",
+"Sign": "greater"
+}
+},
+"TrikWaitForLight": {
+"label": "Wait for Light",
+"props": {
+"Percents": "0",
+"Port": "A1",
+"Sign": "greater"
+}
+},
+"TrikWaitForMessage": {
+"label": "Wait for Message",
+"props": {
+"Synchronized": "true",
+"Variable": ""
+}
+},
+"TrikWaitForMotion": {
+"label": "Wait for Motion",
+"props": {}
+},
+"TrikWaitForSonarDistance": {
+"label": "Wait for Ultrasonic Distance",
+"props": {
+"Distance": "0",
+"Port": "D1",
+"Sign": "greater"
+}
+},
+"TrikWaitForTouchSensor": {
+"label": "Wait for Touch Sensor",
+"props": {
+"Port": "A1"
+}
+},
+"TrikWaitGamepadButton": {
+"label": "Wait Gamepad Button",
+"props": {
+"Button": "1"
+}
+},
+"TrikWaitGamepadConnect": {
+"label": "Wait for Gamepad Connect",
+"props": {}
+},
+"TrikWaitGamepadDisconnect": {
+"label": "Wait for Gamepad Disconnect",
+"props": {}
+},
+"TrikWaitGamepadWheel": {
+"label": "Wait for Gamepad Wheel",
+"props": {
+"Angle": "0",
+"Sign": "greater"
+}
+},
+"TrikWaitPadPress": {
+"label": "Wait Pad Press",
+"props": {
+"Pad": "1"
+}
+},
+"TrikWriteToFile": {
+"label": "Write To File",
+"props": {
+"File": "output.txt",
+"Text": ""
+}
+},
+"VariableInit": {
+"label": "Variable Initialization",
+"props": {
+"value": "0",
+"variable": "x"
+}
+}
+}
