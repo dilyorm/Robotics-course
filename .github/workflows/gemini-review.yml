@@ -1,0 +1,214 @@
+name: Gemini review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout trusted base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare diff
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl --fail-with-body -L \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3.diff" \
+            "https://api.github.com/repos/$REPOSITORY/pulls/$PR_NUMBER" \
+            -o review.diff
+
+          wc -c review.diff
+
+      - name: Run Gemini reviewer
+        id: reviewer
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        shell: bash
+        run: |
+          python .github/reviewer/gemini_reviewer.py . \
+            --diff review.diff \
+            --output review_report.json \
+            --model gemini-3.5-flash-lite
+
+      - name: Upload review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-review-${{ github.run_number }}
+          path: review_report.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Comment result on pull request
+        if: ${{ always() && github.event_name == 'pull_request_target' }}
+        uses: actions/github-script@v7
+        env:
+          REVIEW_OUTCOME: ${{ steps.reviewer.outcome }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- gemini-review -->";
+
+            let report = null;
+            try {
+              report = JSON.parse(
+                fs.readFileSync("review_report.json", "utf8")
+              );
+            } catch (_) {}
+
+            const verdict = report?.verdict || "needs_manual_review";
+            const findings = Array.isArray(report?.findings)
+              ? report.findings
+              : [];
+            const questions = Array.isArray(report?.questions)
+              ? report.questions
+              : [];
+
+            let body = `${marker}
+            ## Gemini review
+
+            **Вердикт:** \`${verdict}\`
+            `;
+
+            if (process.env.REVIEW_OUTCOME !== "success") {
+              body += `
+            ⚠️ Ревьюер завершился с технической ошибкой. Нужна ручная проверка.
+            `;
+            }
+
+            if (findings.length === 0) {
+              body += "\nСущественных замечаний не найдено.\n";
+            } else {
+              body += "\n### Замечания\n\n";
+
+              for (const [index, finding] of findings.slice(0, 10).entries()) {
+                const title =
+                  finding.title ||
+                  finding.message ||
+                  finding.description ||
+                  "Замечание";
+
+                const location = finding.path
+                  ? `${finding.path}${finding.line ? `:${finding.line}` : ""}`
+                  : "место не указано";
+
+                body += `**${index + 1}. ${title}**\n`;
+                body += `- Файл: \`${location}\`\n`;
+
+                if (finding.status) {
+                  body += `- Статус: \`${finding.status}\`\n`;
+                }
+
+                if (finding.severity) {
+                  body += `- Серьёзность: \`${finding.severity}\`\n`;
+                }
+
+                if (finding.description) {
+                  body += `- ${finding.description}\n`;
+                }
+
+                body += "\n";
+              }
+            }
+
+            if (questions.length > 0) {
+              body += "\n### Вопросы для ручной проверки\n\n";
+              for (const question of questions.slice(0, 10)) {
+                body += `- ${question.question || question.text || question}\n`;
+              }
+            }
+
+            body +=
+              "\n---\nАвтоматическая проверка. Перед слиянием требуется человеческий approve.";
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const { data: comments } =
+              await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number,
+                per_page: 100
+              });
+
+            const existing = comments.find(
+              comment =>
+                comment.user?.type === "Bot" &&
+                comment.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body
+              });
+            }
+
+      - name: Enforce reviewer verdict
+        if: always()
+        env:
+          REVIEW_OUTCOME: ${{ steps.reviewer.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$REVIEW_OUTCOME" != "success" ] || [ ! -s review_report.json ]; then
+            echo "Reviewer did not produce a usable report."
+            exit 1
+          fi
+
+          verdict="$(python - <<'PY'
+          import json
+          from pathlib import Path
+
+          try:
+              data = json.loads(
+                  Path("review_report.json").read_text(encoding="utf-8")
+              )
+              print(data.get("verdict", "needs_manual_review"))
+          except Exception:
+              print("needs_manual_review")
+          PY
+          )"
+
+          echo "Reviewer verdict: $verdict"
+
+          if [ "$verdict" != "pass" ]; then
+            echo "Merge is blocked until the review is resolved."
+            exit 1
+          fi
